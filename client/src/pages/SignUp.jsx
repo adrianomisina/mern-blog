@@ -95,7 +95,7 @@ const SignUp = () => {
                   <Spinner size='sm' />
                   <span className="pl-3">Loading...</span>                
                 </>
-              ) : 'sign Up'}
+              ) : 'Sign Up'}
             </Button>
           </form>
           <div className="flex gap-2 text-sm mt-5">
