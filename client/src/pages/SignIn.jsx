@@ -1,48 +1,48 @@
 /* eslint-disable react/no-unescaped-entities */
-import { useState } from "react"
-import { Link, useNavigate} from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button, Label, TextInput, Alert, Spinner } from 'flowbite-react';
-
+import { useDispatch, useSelector } from 'react-redux';
+import { signInStart, signInSuccess, signInFailure } from "../redux/user/userSlice";
 
 const SignIn = () => {
-  const [formData, setFormData] = useState({});
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({});
+    const { loading, error: errorMessage } = useSelector(state => state.user);
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
 
-  const navigate = useNavigate()
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.id]: e.target.value.trim() });
+    };
 
-  const handleChange = (e) => {
-    // console.log(e.target.value)
-    setFormData({...formData, [e.target.id]: e.target.value.trim()})
-  }
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!formData.password || !formData.email) {
+            dispatch(signInFailure('Please fill all the fields'));
+            return; // Early return to avoid further execution
+        }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!formData.password || !formData.email) {
-      return setErrorMessage('Please fill out all fields.')
-    }
-    try {
-      setLoading(true);
-      setErrorMessage(null)
-      const response = await fetch('/api/auth/signin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
-      const data = await response.json();
-      if (data.success === false) {
-        return setErrorMessage(data.message);
-      }
-      setLoading(false);
-      if (response.ok) {
-       return navigate('/')
-     }
-      setFormData({})
-    } catch (error) {
-      setErrorMessage(error.message);
-      setLoading(false)
-    }
-  }
+        try {
+            dispatch(signInStart());
+
+            const response = await fetch('/api/auth/signin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await response.json();
+            if (!response.ok || data.success === false) {
+                dispatch(signInFailure(data.message || 'Sign-in failed.'));
+                return; // Early return on failure
+            }
+
+            dispatch(signInSuccess(data));
+            navigate('/');
+        } catch (error) {
+            dispatch(signInFailure(error.message || 'Sign-in failed.'));
+        }
+    };
 
   return (
     <div className="min-h-screen mt-20">
